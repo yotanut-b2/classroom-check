@@ -7,8 +7,9 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -43,10 +44,27 @@ def _register_thai_font() -> str:
 def build_pdf(df: pd.DataFrame, title: str) -> bytes:
     font = _register_thai_font()
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=1 * cm, leftMargin=1 * cm, topMargin=1 * cm, bottomMargin=1 * cm)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.2 * cm, leftMargin=1.2 * cm, topMargin=1.2 * cm, bottomMargin=1.2 * cm)
     styles = getSampleStyleSheet()
     for style in styles.byName.values():
         style.fontName = font
+        style.fontSize = 16
+        style.leading = 20
+        style.alignment = TA_LEFT
+    styles["Title"].alignment = TA_CENTER
+    styles["Title"].fontSize = 20
+    styles["Title"].leading = 24
+    styles["Heading2"].alignment = TA_CENTER
+    styles["Heading2"].fontSize = 18
+    styles["Heading2"].leading = 22
+    body_style = ParagraphStyle(
+        "ThaiBody",
+        parent=styles["BodyText"],
+        fontName=font,
+        fontSize=16,
+        leading=20,
+        alignment=TA_LEFT,
+    )
 
     story = [Paragraph(title, styles["Title"]), Spacer(1, 0.25 * cm)]
     summary = room_summary(df)
@@ -56,7 +74,7 @@ def build_pdf(df: pd.DataFrame, title: str) -> bytes:
         ["จำนวนผู้ตรวจ", df["inspector"].nunique()],
         ["คะแนนเฉลี่ยรวม", f"{df['score'].mean():.2f} ({score_interpretation(df['score'].mean())})"],
     ]
-    story.append(Table(metrics, style=[("FONTNAME", (0, 0), (-1, -1), font), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey)]))
+    story.append(Table(metrics, colWidths=[8 * cm, 8 * cm], style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 16), ("LEADING", (0, 0), (-1, -1), 20), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey)]))
     story.append(Spacer(1, 0.35 * cm))
 
     for heading, grouped in [
@@ -65,7 +83,7 @@ def build_pdf(df: pd.DataFrame, title: str) -> bytes:
     ]:
         story.append(Paragraph(heading, styles["Heading2"]))
         table_data = [grouped.columns.tolist()] + grouped.round(2).astype(str).values.tolist()
-        story.append(Table(table_data, style=[("FONTNAME", (0, 0), (-1, -1), font), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
+        story.append(Table(table_data, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 16), ("LEADING", (0, 0), (-1, -1), 20), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
         story.append(Spacer(1, 0.3 * cm))
 
     criteria = load_criteria()
@@ -88,11 +106,11 @@ def build_pdf(df: pd.DataFrame, title: str) -> bytes:
     cols = ["building", "room_number", "class_level", "period", "teacher_name"] + list(rename.values()) + ["mean_score", "interpretation", "note"]
     detail_data = [cols] + pivot[cols].round(2).astype(str).values.tolist()
     story.append(Paragraph("รายละเอียดรายห้อง", styles["Heading2"]))
-    story.append(Table(detail_data, repeatRows=1, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 8), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
+    story.append(Table(detail_data, repeatRows=1, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 16), ("LEADING", (0, 0), (-1, -1), 20), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
     story.append(Spacer(1, 0.35 * cm))
     story.append(Paragraph("คำอธิบายรหัสเกณฑ์", styles["Heading2"]))
     legend = [[f"C{int(row.criteria_id)}", row.criteria] for row in criteria.itertuples()]
-    story.append(Table([["รหัส", "เกณฑ์"]] + legend, style=[("FONTNAME", (0, 0), (-1, -1), font), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey)]))
+    story.append(Table([["รหัส", "เกณฑ์"]] + legend, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 16), ("LEADING", (0, 0), (-1, -1), 20), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
     doc.build(story)
     return buffer.getvalue()
 
