@@ -21,16 +21,19 @@ from .utils import score_interpretation
 
 
 def _register_thai_font() -> str:
+    app_root = Path(__file__).resolve().parents[1]
     candidates = [
+        app_root / "assets" / "fonts" / "THSarabunNew.ttf",
         r"C:\Windows\Fonts\THSarabunNew.ttf",
         r"C:\Windows\Fonts\tahoma.ttf",
         r"C:\Windows\Fonts\arial.ttf",
     ]
     for path in candidates:
-        if Path(path).exists():
-            font_name = Path(path).stem
+        font_path = Path(path)
+        if font_path.exists():
+            font_name = font_path.stem
             try:
-                pdfmetrics.registerFont(TTFont(font_name, path))
+                pdfmetrics.registerFont(TTFont(font_name, str(font_path)))
                 return font_name
             except Exception:
                 continue
