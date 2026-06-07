@@ -9,6 +9,16 @@ from .google_sheet import append_rows, duplicate_exists
 from .utils import current_day_name, make_record_id, thai_buddhist_date
 
 
+def _building_floor_from_room(room_number: str, fallback_assignments: list[dict]) -> tuple[str, str]:
+    digits = "".join(ch for ch in str(room_number) if ch.isdigit())
+    if len(digits) >= 2:
+        return digits[0], digits[1]
+    if fallback_assignments:
+        first = fallback_assignments[0]
+        return str(first.get("building", "")), str(first.get("floor", ""))
+    return "", ""
+
+
 def _teacher_input(teachers: list[str]) -> str:
     if not teachers:
         return st.text_input("ครูผู้สอน")
@@ -43,25 +53,11 @@ def render_observation_form() -> None:
         st.warning("ไม่พบอาคาร/ชั้นที่รับผิดชอบในวันนี้")
         return
 
-    if role == "admin":
-        building_options = sorted(examiner_df["building"].astype(str).unique().tolist())
-    else:
-        building_options = sorted({a["building"] for a in assignments})
+    if assignments:
+        assigned_text = ", ".join([f"อาคาร {a['building']} ชั้น {a['floor']}" for a in assignments])
+        st.caption(f"สิทธิ์พื้นที่รับผิดชอบ: {assigned_text}")
 
     with st.form("observation_form"):
-        c1, c2 = st.columns(2)
-        with c1:
-            building = st.selectbox("อาคาร", building_options)
-        floor_source = examiner_df if role == "admin" else None
-        if role == "admin":
-            floor_options = sorted(
-                floor_source[floor_source["building"].astype(str) == str(building)]["floor"].astype(str).unique().tolist()
-            )
-        else:
-            floor_options = sorted({a["floor"] for a in assignments if a["building"] == building})
-        with c2:
-            floor = st.selectbox("ชั้น", floor_options)
-
         c3, c4, c5 = st.columns(3)
         room_number = c3.text_input("หมายเลขห้อง เช่น 921")
         class_level = c4.text_input("ห้อง ม. เช่น ม.3/1")
@@ -98,6 +94,11 @@ def render_observation_form() -> None:
             missing.append(label)
     if missing:
         st.error("กรุณากรอกข้อมูลให้ครบ: " + ", ".join(missing))
+        return
+
+    building, floor = _building_floor_from_room(room_number, assignments)
+    if not building or not floor:
+        st.error("กรุณากรอกหมายเลขห้องอย่างน้อย 2 หลัก เพื่อให้ระบบอ่านอาคารและชั้นได้ เช่น 921")
         return
 
     date_value = today.isoformat()
