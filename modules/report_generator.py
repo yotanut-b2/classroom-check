@@ -110,10 +110,10 @@ def build_pdf(df: pd.DataFrame, title: str) -> bytes:
     detail_headers = ["อาคาร", "ห้อง", "ชั้น", "คาบ", "ครู"] + list(rename.values()) + ["เฉลี่ย", "ระดับ", "หมายเหตุ"]
     detail_data = [detail_headers] + pivot[cols].round(2).astype(str).values.tolist()
     story.append(Paragraph("รายละเอียดรายห้อง", styles["Heading2"]))
-    detail_col_widths = [1.0 * cm, 1.35 * cm, 1.15 * cm, 0.9 * cm, 3.1 * cm]
-    detail_col_widths += [0.65 * cm for _ in rename]
-    detail_col_widths += [1.15 * cm, 1.35 * cm, 2.5 * cm]
-    story.append(Table(detail_data, colWidths=detail_col_widths, hAlign="LEFT", repeatRows=1, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 12), ("LEADING", (0, 0), (-1, -1), 14), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
+    detail_col_widths = [1.2 * cm, 1.6 * cm, 1.3 * cm, 1.0 * cm, 4.2 * cm]
+    detail_col_widths += [0.75 * cm for _ in rename]
+    detail_col_widths += [1.3 * cm, 1.6 * cm, 3.1 * cm]
+    story.append(Table(detail_data, colWidths=detail_col_widths, hAlign="LEFT", repeatRows=1, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 14), ("LEADING", (0, 0), (-1, -1), 16), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
     doc.build(story)
     return buffer.getvalue()
 
