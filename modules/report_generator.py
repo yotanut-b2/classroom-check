@@ -112,7 +112,7 @@ def build_pdf(df: pd.DataFrame, title: str) -> bytes:
     detail_col_widths = [1.1 * cm, 1.5 * cm, 1.5 * cm, 1.0 * cm, 2.3 * cm]
     detail_col_widths += [0.75 * cm for _ in rename]
     detail_col_widths += [1.35 * cm, 1.55 * cm, 3.0 * cm]
-    story.append(Table(detail_data, colWidths=detail_col_widths, hAlign="LEFT", repeatRows=1, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 9), ("LEADING", (0, 0), (-1, -1), 11), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
+    story.append(Table(detail_data, colWidths=detail_col_widths, hAlign="LEFT", repeatRows=1, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 12), ("LEADING", (0, 0), (-1, -1), 14), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
     doc.build(story)
     return buffer.getvalue()
 
