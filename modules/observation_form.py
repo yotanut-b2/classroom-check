@@ -59,7 +59,7 @@ def render_observation_form() -> None:
     with st.form("observation_form"):
         c1, c2, c3 = st.columns(3)
         room_number = c1.text_input("หมายเลขห้อง เช่น 921")
-        class_level = c2.text_input("ห้อง ม. เช่น ม.3/1")
+        class_level = c2.text_input("ห้อง เช่น 3/1")
         period = c3.selectbox("คาบ", list(range(1, 10)))
         teacher_name = _teacher_input(teachers)
 
@@ -83,7 +83,7 @@ def render_observation_form() -> None:
     missing = []
     for label, value in {
         "หมายเลขห้อง": room_number,
-        "ห้อง ม.": class_level,
+        "ห้อง": class_level,
         "ครูผู้สอน": teacher_name,
     }.items():
         if not str(value or "").strip():

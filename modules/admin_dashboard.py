@@ -75,7 +75,8 @@ def render_admin_dashboard() -> None:
     display = building_summary[
         ["building", "room_number", "class_level", "period", "teacher_name", "mean_score", "interpretation", "note"]
     ]
-    st.dataframe(display.style.applymap(score_color, subset=["mean_score"]), use_container_width=True)
+    styled_display = display.style.map(score_color, subset=["mean_score"])
+    st.dataframe(styled_display, use_container_width=True)
 
     for _, row in building_summary.iterrows():
         with st.expander(f"ห้อง {row['room_number']} คาบ {row['period']} | {row['teacher_name']}"):
