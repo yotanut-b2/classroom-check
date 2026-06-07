@@ -11,6 +11,8 @@ from .utils import current_day_name, make_record_id, thai_buddhist_date
 
 def _building_floor_from_room(room_number: str, fallback_assignments: list[dict]) -> tuple[str, str]:
     digits = "".join(ch for ch in str(room_number) if ch.isdigit())
+    if digits.startswith("10") and len(digits) >= 3:
+        return "10", digits[2]
     if len(digits) >= 2:
         return digits[0], digits[1]
     if fallback_assignments:
@@ -21,17 +23,14 @@ def _building_floor_from_room(room_number: str, fallback_assignments: list[dict]
 
 def _teacher_input(teachers: list[str]) -> str:
     if not teachers:
+        st.warning("ไม่พบไฟล์รายชื่อครู จึงให้กรอกชื่อเอง")
         return st.text_input("ครูผู้สอน")
-    try:
-        from streamlit_searchbox import st_searchbox
-
-        def search_teacher(searchterm: str):
-            text = (searchterm or "").lower()
-            return [name for name in teachers if text in name.lower()][:30]
-
-        return st_searchbox(search_teacher, label="ครูผู้สอน", placeholder="พิมพ์ชื่อครู")
-    except Exception:
-        return st.selectbox("ครูผู้สอน", [""] + teachers)
+    return st.selectbox(
+        "ครูผู้สอน",
+        [""] + teachers,
+        index=0,
+        placeholder="พิมพ์เพื่อค้นหาหรือเลือกชื่อครู",
+    )
 
 
 def render_observation_form() -> None:
@@ -58,10 +57,10 @@ def render_observation_form() -> None:
         st.caption(f"สิทธิ์พื้นที่รับผิดชอบ: {assigned_text}")
 
     with st.form("observation_form"):
-        c3, c4, c5 = st.columns(3)
-        room_number = c3.text_input("หมายเลขห้อง เช่น 921")
-        class_level = c4.text_input("ห้อง ม. เช่น ม.3/1")
-        period = c5.selectbox("คาบ", list(range(1, 10)))
+        c1, c2, c3 = st.columns(3)
+        room_number = c1.text_input("หมายเลขห้อง เช่น 921")
+        class_level = c2.text_input("ห้อง ม. เช่น ม.3/1")
+        period = c3.selectbox("คาบ", list(range(1, 10)))
         teacher_name = _teacher_input(teachers)
 
         st.subheader("ประเมินตามเกณฑ์")
@@ -76,7 +75,6 @@ def render_observation_form() -> None:
                 key=key,
             )
         note = st.text_area("หมายเหตุ")
-        confirm_duplicate = st.checkbox("ยืนยันบันทึกซ้ำ หากห้องนี้ถูกบันทึกแล้ว")
         submitted = st.form_submit_button("บันทึกผลการสังเกต", type="primary")
 
     if not submitted:
@@ -84,8 +82,6 @@ def render_observation_form() -> None:
 
     missing = []
     for label, value in {
-        "อาคาร": building,
-        "ชั้น": floor,
         "หมายเลขห้อง": room_number,
         "ห้อง ม.": class_level,
         "ครูผู้สอน": teacher_name,
@@ -102,8 +98,8 @@ def render_observation_form() -> None:
         return
 
     date_value = today.isoformat()
-    if duplicate_exists(date_value, building, room_number, str(period), teacher_name) and not confirm_duplicate:
-        st.warning("พบข้อมูลห้องนี้ในวัน/คาบ/ครูเดียวกันแล้ว หากต้องการบันทึกซ้ำให้ติ๊กยืนยันก่อน")
+    if duplicate_exists(date_value, building, room_number, str(period), teacher_name):
+        st.warning("พบข้อมูลห้องนี้ในวัน/คาบ/ครูเดียวกันแล้ว จึงไม่บันทึกซ้ำ")
         return
 
     now = datetime.now().isoformat(timespec="seconds")
