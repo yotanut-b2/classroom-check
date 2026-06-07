@@ -66,10 +66,21 @@ def build_pdf(df: pd.DataFrame, title: str) -> bytes:
         story.append(Spacer(1, 0.3 * cm))
 
     criteria = load_criteria()
-    pivot = df.pivot_table(index=["record_id", "building", "room_number", "class_level", "period", "teacher_name", "note"], columns="criteria_id", values="score", aggfunc="first").reset_index()
-    pivot["mean_score"] = pivot[[c for c in pivot.columns if isinstance(c, int)]].mean(axis=1)
+    detail_df = df.copy()
+    detail_df["criteria_id"] = pd.to_numeric(detail_df["criteria_id"], errors="coerce").astype("Int64").astype(str)
+    pivot = detail_df.pivot_table(
+        index=["record_id", "building", "room_number", "class_level", "period", "teacher_name", "note"],
+        columns="criteria_id",
+        values="score",
+        aggfunc="first",
+    ).reset_index()
+    criteria_ids = [str(int(value)) for value in criteria["criteria_id"].tolist()]
+    for criteria_id in criteria_ids:
+        if criteria_id not in pivot.columns:
+            pivot[criteria_id] = pd.NA
+    pivot["mean_score"] = pivot[criteria_ids].apply(pd.to_numeric, errors="coerce").mean(axis=1)
     pivot["interpretation"] = pivot["mean_score"].apply(score_interpretation)
-    rename = {i: f"C{i}" for i in criteria["criteria_id"].tolist()}
+    rename = {criteria_id: f"C{criteria_id}" for criteria_id in criteria_ids}
     pivot = pivot.rename(columns=rename).sort_values(["building", "room_number", "period"])
     cols = ["building", "room_number", "class_level", "period", "teacher_name"] + list(rename.values()) + ["mean_score", "interpretation", "note"]
     detail_data = [cols] + pivot[cols].round(2).astype(str).values.tolist()

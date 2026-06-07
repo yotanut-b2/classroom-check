@@ -98,6 +98,11 @@ def render_observation_form() -> None:
         return
 
     date_value = today.isoformat()
+    submission_signature = "|".join([date_value, str(building), str(room_number).strip(), str(period), str(teacher_name).strip()])
+    if st.session_state.get("last_observation_signature") == submission_signature:
+        st.warning("รายการนี้เพิ่งบันทึกไปแล้ว จึงไม่บันทึกซ้ำ")
+        return
+
     if duplicate_exists(date_value, building, room_number, str(period), teacher_name):
         st.warning("พบข้อมูลห้องนี้ในวัน/คาบ/ครูเดียวกันแล้ว จึงไม่บันทึกซ้ำ")
         return
@@ -133,4 +138,5 @@ def render_observation_form() -> None:
             }
         )
     append_rows(rows)
+    st.session_state["last_observation_signature"] = submission_signature
     st.success("บันทึกข้อมูลสำเร็จ")
