@@ -74,7 +74,7 @@ def build_pdf(df: pd.DataFrame, title: str) -> bytes:
         ["จำนวนผู้ตรวจ", df["inspector"].nunique()],
         ["คะแนนเฉลี่ยรวม", f"{df['score'].mean():.2f} ({score_interpretation(df['score'].mean())})"],
     ]
-    story.append(Table(metrics, colWidths=[8 * cm, 8 * cm], style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 16), ("LEADING", (0, 0), (-1, -1), 20), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey)]))
+    story.append(Table(metrics, colWidths=[8 * cm, 8 * cm], hAlign="LEFT", style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 16), ("LEADING", (0, 0), (-1, -1), 20), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey)]))
     story.append(Spacer(1, 0.35 * cm))
 
     for heading, grouped in [
@@ -83,7 +83,7 @@ def build_pdf(df: pd.DataFrame, title: str) -> bytes:
     ]:
         story.append(Paragraph(heading, styles["Heading2"]))
         table_data = [grouped.columns.tolist()] + grouped.round(2).astype(str).values.tolist()
-        story.append(Table(table_data, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 16), ("LEADING", (0, 0), (-1, -1), 20), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
+        story.append(Table(table_data, hAlign="LEFT", style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 16), ("LEADING", (0, 0), (-1, -1), 20), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
         story.append(Spacer(1, 0.3 * cm))
 
     criteria = load_criteria()
@@ -104,13 +104,15 @@ def build_pdf(df: pd.DataFrame, title: str) -> bytes:
     rename = {criteria_id: f"C{criteria_id}" for criteria_id in criteria_ids}
     pivot = pivot.rename(columns=rename).sort_values(["building", "room_number", "period"])
     cols = ["building", "room_number", "class_level", "period", "teacher_name"] + list(rename.values()) + ["mean_score", "interpretation", "note"]
+    for col in cols:
+        if col not in pivot.columns:
+            pivot[col] = ""
     detail_data = [cols] + pivot[cols].round(2).astype(str).values.tolist()
     story.append(Paragraph("รายละเอียดรายห้อง", styles["Heading2"]))
-    story.append(Table(detail_data, repeatRows=1, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 16), ("LEADING", (0, 0), (-1, -1), 20), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
-    story.append(Spacer(1, 0.35 * cm))
-    story.append(Paragraph("คำอธิบายรหัสเกณฑ์", styles["Heading2"]))
-    legend = [[f"C{int(row.criteria_id)}", row.criteria] for row in criteria.itertuples()]
-    story.append(Table([["รหัส", "เกณฑ์"]] + legend, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 16), ("LEADING", (0, 0), (-1, -1), 20), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
+    detail_col_widths = [1.1 * cm, 1.5 * cm, 1.5 * cm, 1.0 * cm, 2.3 * cm]
+    detail_col_widths += [0.75 * cm for _ in rename]
+    detail_col_widths += [1.35 * cm, 1.55 * cm, 3.0 * cm]
+    story.append(Table(detail_data, colWidths=detail_col_widths, hAlign="LEFT", repeatRows=1, style=[("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 9), ("LEADING", (0, 0), (-1, -1), 11), ("ALIGN", (0, 0), (-1, -1), "LEFT"), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("GRID", (0, 0), (-1, -1), 0.25, colors.grey), ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey)]))
     doc.build(story)
     return buffer.getvalue()
 
